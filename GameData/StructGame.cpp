@@ -1,6 +1,55 @@
 #include "StructGame.h"
 #include "BaseGame.h"
 #include <iostream>
+
+// DbgPrintMine 打印可变长参数调试信息
+void DbgPrintMine(char* pszFromat, ...) {
+	// 判断是否在DEBUG 模式下
+#ifdef _DEBUG
+
+	// 定义缓冲区
+	char szBufFormat[0x1000];
+	// 定义格式缓冲区
+	char szBufFormatGame[0x1008] = "GameDebug:";
+
+	// 定义list
+	va_list argList;
+	// 初始化list
+	va_start(argList, pszFromat);
+
+	// 获取可变长参数
+	vsprintf_s(szBufFormat, pszFromat, argList);
+
+	// 复制字符串
+	strcat_s(szBufFormatGame, szBufFormat);
+
+	// 输出调试信息
+	OutputDebugStringA(szBufFormatGame);
+
+	// 清除list
+	va_end(argList);
+
+#endif // _DEBUG
+
+
+
+}
+
+// 计算两点之间的距离
+DWORD play2PointDistance(float x1, float y1, float x2, float y2)
+{
+
+	DWORD ndDistance = 0xFFFF;
+	float a = abs(y1 - y2);
+	float b = abs(x1 - x2);
+	float c = sqrt(pow(a, 2) + pow(b, 2));
+	ndDistance = c;
+	return ndDistance;
+
+}
+
+
+
 TROLE_PROPERTY* TROLE_PROPERTY::GetData()
 {
 
@@ -182,22 +231,32 @@ HWND GetGameWndHandle() {
 	return hGame;
 }
 
-#define TYPE 8
+#define TYPE 0x8
 
 TMonseterList* TMonseterList::getData()
 {
 	DWORD ndObj = NULL;
+	TRoleObj tRoleObj;
 	//memset(this, 0, sizeof(TMonseterList));
 	try
 	{
 		for (int i = 0; i < MONSETERNUM; i++) {
 			ndObj = *(DWORD*)(BaseMonseterList + 4 * i);
-			if (ndObj == 0 || *(DWORD*)ndObj+TYPE==0x2E) {
+			if (ndObj == 0 || *(DWORD*)(ndObj + TYPE)==0x31) {
+				// 对象等级置0
 				this->tMonList[i].ndLevel = 0;
+				// 对象ID置0
+				this->tMonList[i].ndID = 0;
+				// 对象距离最大化
+				this->tMonList[i].ndDistance = 0xffff;
+
+				DbgPrintMine((char*)("在怪物初始化位置,下标%d是进行了置空操作"), i);
 				continue;
 			}
 			// 怪物名字
 			this->tMonList[i].szMName = (char*)(ndObj + 0x360);
+			// 怪物ID
+			this->tMonList[i].ndID = *(DWORD*)(ndObj + 0xC);
 			// 怪物血量
 			this->tMonList[i].ndHp = *(DWORD*)(ndObj + 0x5f4);
 			// 怪物等级
@@ -208,6 +267,19 @@ TMonseterList* TMonseterList::getData()
 			this->tMonList[i].flY = *(float*)(ndObj + 0x1068);
 			// 怪物生命状态
 			this->tMonList[i].IsDead = *(BOOL*)(ndObj + 0x3c0);
+			// 怪物类别
+			this->tMonList[i].ndMonType = *(DWORD*)(ndObj + 0x8);
+			// 怪物距离玩家的距离
+			this->tMonList[i].ndDistance = play2PointDistance(
+				// 怪物坐标X
+				this->tMonList[i].flX,
+				// 怪物坐标Y
+				this->tMonList[i].flY,
+				//角色坐标X
+				tRoleObj.GetData()->flXCur,
+				// 角色坐标Y
+				tRoleObj.GetData()->flYCur
+			);
 		}
 	}
 	catch (...)
@@ -223,9 +295,12 @@ BOOL TMonseterList::dbgPrintMsg() {
 		if (tMonList[i].ndLevel == 0) {
 			continue;
 		}
-		DbgPrintMine((char*)("%s,等级：%d级；血量：%d；当前位置X:%f Y:%f；生命状态：%d"),
+		DbgPrintMine((char*)("%s；距离：%d；类别：%X；等级：%d级；对应ID：%X；血量：%d；当前位置X:%f Y:%f；生命状态：%d"),
 			tMonList[i].szMName,
+			tMonList[i].ndDistance,
+			tMonList[i].ndMonType,
 			tMonList[i].ndLevel,
+			tMonList[i].ndID,
 			tMonList[i].ndHp,
 			tMonList[i].flX,
 			tMonList[i].flY,
@@ -234,38 +309,28 @@ BOOL TMonseterList::dbgPrintMsg() {
 	return TRUE;
 }
 
-// DbgPrintMine 打印可变长参数调试信息
-void DbgPrintMine(char* pszFromat, ...) {
-	// 判断是否在DEBUG 模式下
-#ifdef _DEBUG
+DWORD TMonseterList::getMinDistanceMonIndex()
+{
+	DWORD index = -1;
 
-	// 定义缓冲区
-	char szBufFormat[0x1000];
-	// 定义格式缓冲区
-	char szBufFormatGame[0x1008] = "GameDebug:";
+	for (int i = 0; i < MONSETERNUM; i++) {
+		// 计数器
+		int count = 0;
 
-	// 定义list
-	va_list argList;
-	// 初始化list
-	va_start(argList, pszFromat);
+		for (int j = 0; j < MONSETERNUM; j++) {
+			if (tMonList[i].ndDistance <= tMonList[j].ndDistance) {
+				count++;
+				index = i;
+				if (count == MONSETERNUM) {
+					return index;
+				}
+			}
+		}
+	}
 
-	// 获取可变长参数
-	vsprintf_s(szBufFormat, pszFromat, argList);
-
-	// 复制字符串
-	strcat_s(szBufFormatGame, szBufFormat);
-
-	// 输出调试信息
-	OutputDebugStringA(szBufFormatGame);
-
-	// 清除list
-	va_end(argList);
-
-#endif // _DEBUG
-
-
-
+	return index;
 }
+
 
 TCActionList* TCActionList::getData()
 {
@@ -345,7 +410,6 @@ BOOL UseAction(DWORD ndIndex) {
 BOOL TCActionList::UseActionByIndex(DWORD ndIndex)
 {
 	if (UseAction(ndIndex)) {
-		MessageBeep(0);
 		return TRUE;
 	}
 	return FALSE;
@@ -356,11 +420,86 @@ BOOL TCActionList::UseActionByName(char* szpName)
 	DWORD ndIndex = getObjByIndex(szpName);
 	if (ndIndex != -1) {
 		if (UseAction(ndIndex)) {
-			MessageBeep(0);
 			return TRUE;
 		}
 	}
 	return FALSE;
 }
 
+#define OffsetRole_SelIndex 0x1A64
+#define OffsetRole_RoleXCur 0x1C9C
+#define OffsetRole_RoleYCur 0x1CA4
+TRoleObj* TRoleObj::GetData()
+{
+	// 初始化
+	DWORD ndObjRole;
+	__try {
+		// 取出玩家地址
+		ndObjRole = *(DWORD*)BaseRoleObj;
+		ndSelIndex = *(DWORD*)(ndObjRole + OffsetRole_SelIndex);
+		flXCur = *(float*)(ndObjRole + OffsetRole_RoleXCur);
+		flYCur = *(float*)(ndObjRole + OffsetRole_RoleYCur);
 
+	}
+	__except (1) {
+		// 可以捕获到内存的异常
+		DbgPrintMine((char*)("TRoleObj* TRoleObj::GetData() 内存读取异常"));
+	}
+
+	return this;
+}
+
+BOOL TRoleObj::SelObj(DWORD ndIndexForAllObj)
+{
+	// 打印传入的怪物参数
+	DbgPrintMine((char*)("%X"), ndIndexForAllObj);
+	DWORD ndObjRole;
+	__try {
+
+		// 取消选中
+		_asm {
+			// 取出选中对象下标
+			MOV EDI, DWORD PTR DS : [BaseRoleObj]
+			MOV EAX, DWORD PTR DS : [EDI + OffsetRole_SelIndex]
+			CMP EAX, 0xFFFF
+			JZ NEXTLABLE
+			// 获取选中对象
+			MOV ECX, DWORD PTR DS : [EAX * 4 + BaseAllObjList]
+			MOV EDX, DWORD PTR DS : [ECX]
+			MOV EAX, DWORD PTR DS : [EDX + 4]
+			PUSH 0
+			PUSH 0
+			PUSH 0x450
+			CALL EAX
+
+		}
+		// 跳转标签
+	NEXTLABLE:
+
+		ndObjRole = *(DWORD*)BaseRoleObj;
+		// 写入对象ID标识选中
+		*(DWORD*)(ndObjRole + OffsetRole_SelIndex) = ndIndexForAllObj;
+
+		// 选中
+		_asm {
+			// 取出选中对象下标
+			MOV EAX, ndIndexForAllObj
+			// 获取选中对象
+			MOV ECX, DWORD PTR DS : [EAX * 4 + BaseAllObjList]
+			MOV EDX, DWORD PTR DS : [ECX]
+			MOV EAX, DWORD PTR DS : [EDX + 4]
+			PUSH 0
+			PUSH 1		// 选中显示
+			PUSH 0x450
+			CALL EAX
+		}
+
+		//显示选中状态
+
+
+	}__except(1) {
+		//处理所有异常
+		DbgPrintMine((char*)("BOOL TRoleObj::SelObj(DWORD ndIndexForAllObj) 发现异常"));
+	}
+	return TRUE;
+}

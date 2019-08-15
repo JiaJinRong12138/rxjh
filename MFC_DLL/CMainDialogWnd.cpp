@@ -16,6 +16,7 @@ IMPLEMENT_DYNAMIC(CMainDialogWnd, CDialogEx)
 
 CMainDialogWnd::CMainDialogWnd(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG1, pParent)
+	, m_autoKillMon(FALSE)
 {
 
 }
@@ -27,6 +28,7 @@ CMainDialogWnd::~CMainDialogWnd()
 void CMainDialogWnd::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Check(pDX, IDC_CHECK1, m_autoKillMon);
 }
 
 
@@ -37,6 +39,7 @@ BEGIN_MESSAGE_MAP(CMainDialogWnd, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON4, &CMainDialogWnd::OnBnClickedButton4)
 	ON_BN_CLICKED(IDC_BUTTON5, &CMainDialogWnd::OnBnClickedButton5)
 	ON_BN_CLICKED(IDC_BUTTON6, &CMainDialogWnd::OnBnClickedButton6)
+	ON_BN_CLICKED(IDC_CHECK1, &CMainDialogWnd::OnBnClickedCheck1)
 END_MESSAGE_MAP()
 
 
@@ -116,4 +119,29 @@ void CMainDialogWnd::OnBnClickedButton6()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	testActionMsg(NULL);
+}
+
+
+VOID CALLBACK ExeAction(
+	HWND hwnd,
+	UINT uMsg,
+	UINT_PTR idEvent,
+	DWORD dwTime
+) {
+	// 做对上一个怪物的死亡状态的判断
+	
+	testActionMsg(NULL);
+}
+
+const int PLAYID = 111;
+void CMainDialogWnd::OnBnClickedCheck1()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	if (m_autoKillMon) {
+		SetTimer(PLAYID, 1000, &ExeAction);
+	}
+	else {
+		KillTimer(PLAYID);
+	}
 }

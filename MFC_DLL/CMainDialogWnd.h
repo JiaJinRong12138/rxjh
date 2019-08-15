@@ -27,4 +27,7 @@ public:
 	afx_msg void OnBnClickedButton4();
 	afx_msg void OnBnClickedButton5();
 	afx_msg void OnBnClickedButton6();
+	// 自动打怪的条件
+	BOOL m_autoKillMon;
+	afx_msg void OnBnClickedCheck1();
 };

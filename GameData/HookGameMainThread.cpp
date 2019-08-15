@@ -2,9 +2,12 @@
 #include "StructGame.h"
 #include "HookGameMainThread.h"
 #include "gloab_var.h"
+#include "BaseGame.h"
 
 HHOOK g_hhkGame;
 const DWORD MyMsgCode = RegisterWindowMessageA("MyMsgCode");
+static DWORD ndObjID = 0;
+DWORD isLive = -1;
 // 回调函数
 LRESULT CALLBACK GameWndProc(
 	int nCode,
@@ -30,8 +33,19 @@ LRESULT CALLBACK GameWndProc(
 			case MSG_ACTIONTEST: {
 				TCActionList* ptLIst = tList.getData();
 				ptLIst->TestActionMsg();
+				// 使用下标调用动作
 				//ptLIst->UseActionByIndex(1);
-				ptLIst->UseActionByName((char*)("攻击"));
+				DWORD i = tMonList.getData()->getMinDistanceMonIndex();
+				ndObjID = tMonList.getData()->tMonList[i].ndID;
+				if (ndObjID != 0) {
+					tRoleObj.SelObj(ndObjID);
+					ptLIst->UseActionByName((char*)("攻击"));
+				}
+				else {
+					// 击怪失败，提示音
+					MessageBeep(0);
+				}
+
 			}; break;
 			default:
 				break;
@@ -71,7 +85,24 @@ DWORD msgTest(LPVOID lpData)
 }
 
 DWORD testActionMsg(LPVOID lpData) {
-	SendMessageA(GetGameWndHandle(), MyMsgCode, MSG_ACTIONTEST, (LPARAM)lpData);
+	//[[0x2E64A28 + 4 * 1c8b]+ 3c0]
+	if (isLive == 1) {
+		// 上一个怪物死亡才能进行下一个怪物的选中
+		SendMessageA(GetGameWndHandle(), MyMsgCode, MSG_ACTIONTEST, (LPARAM)lpData);
+	}
+	else if (isLive == -1)
+	{
+		// 第一次执行
+		DbgPrintMine((char*)("第一次执行"));
+		SendMessageA(GetGameWndHandle(), MyMsgCode, MSG_ACTIONTEST, (LPARAM)lpData);
+	}
+	_try{
+		// 获取上一个怪物的生命状态
+		isLive = *(DWORD*)(*(DWORD*)(BaseAllObjList + 4 * ndObjID) + 0x3c0);
+	}_except(1) {
+		DbgPrintMine((char*)("读取内存失败 at isLive = *(DWORD*)(*(DWORD*)(BaseAllObjList + 4 * ndObjID) + 0x3c0);"));
+	}
+	
 	return 0;
 }
 

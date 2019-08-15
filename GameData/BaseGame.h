@@ -1,22 +1,28 @@
-#pragma once
+ï»¿#pragma once
 
-// ÓÎÏ·ÈËÎïµÄ»ùÖ·
-#define BaseRole 0x02C166D8
+// æ¸¸æˆäººç‰©çš„åŸºå€
+#define BaseRole 0x02C176D8
 
-// ÓÎÏ·±³°üµÄ»ùÖ·´æ·ÅµØÖ·
-#define BaseBackpack 0x02E3B3E4
+// æ¸¸æˆèƒŒåŒ…çš„åŸºå€å­˜æ”¾åœ°å€
+#define BaseBackpack 0x02E3C3E4
 
-// Ìí¼Ó±³°üÎïÆ·Ê¹ÓÃCALL µÄµØÖ· ===> Í¨¹ı±³°üÎïÆ·ÏÂ±ê½øĞĞÎïÆ·µÄÊ¹ÓÃ
-#define BaseCall_UseGoodsForIndex 0x00838480
+// æ·»åŠ èƒŒåŒ…ç‰©å“ä½¿ç”¨CALL çš„åœ°å€ ===> é€šè¿‡èƒŒåŒ…ç‰©å“ä¸‹æ ‡è¿›è¡Œç‰©å“çš„ä½¿ç”¨
+#define BaseCall_UseGoodsForIndex 0x008384F0
 
-// ÓÎÏ·Ö÷´°¿Ú»ùÖ·
-#define BaseGameWndHandle 0x01195318
+// æ¸¸æˆä¸»çª—å£åŸºå€
+#define BaseGameWndHandle 0x01195F88
 
-// ¹ÖÎïÁĞ±í»ùÖ·
-#define BaseMonseterList 0x427EBA4
+// æ€ªç‰©åˆ—è¡¨åŸºå€
+#define BaseMonseterList 0x427FBA0  
 
-// ÈËÎï¶¯×÷»ùÖ·
-#define BaseActionList 0x02e3bd58
+// äººç‰©åŠ¨ä½œåŸºå€
+#define BaseActionList 0x02E3CD58
 
-// ÈËÎï¶¯×÷Ê¹ÓÃµÄCALL µÄ»ùÖ·
-#define BaseActionCall 0x00713970
+// äººç‰©åŠ¨ä½œä½¿ç”¨çš„CALL çš„åŸºå€
+#define BaseActionCall 0x007139E0
+
+// è§’è‰²å¯¹è±¡çš„åŸºå€
+#define BaseRoleObj 0x427FBA0
+
+// æ‰€æœ‰å¯¹è±¡çš„æ•°ç»„ [0*4+2E63A28]
+#define BaseAllObjList 0x2E64A28

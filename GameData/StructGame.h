@@ -1,4 +1,7 @@
 #pragma once
+#ifndef _STRUCTGAME_H
+#define _STRUCTGAME_H
+
 #include <windows.h>
 
 // 声明函数 ==> 获取游戏句柄
@@ -6,6 +9,8 @@ HWND GetGameWndHandle();
 
 // 定义外接函数
 extern void DbgPrintMine(char* pszFromat, ...);
+
+extern DWORD play2PointDistance(float x1, float y1, float x2, float y2);
 
 // 背包内物品格数量
 #define nGoodsNum 36
@@ -103,6 +108,10 @@ typedef struct TGOODSLIST_PROPERTY {
 typedef struct TMonseterObj {
 	//+5f4 怪物血量
 	DWORD ndHp;
+	// 怪物类别
+	DWORD ndMonType;
+	// 怪物ID
+	DWORD ndID;
 	//+ 5f8 怪物等级
 	DWORD ndLevel;
 	//+ 360 怪物名字
@@ -113,6 +122,9 @@ typedef struct TMonseterObj {
 	float flY;
 	//+ 3C0 怪物生命状态 0活 / 1死
 	BOOL IsDead;
+	// 距离玩家的距离
+	DWORD ndDistance;
+
 }_TMonseterObj;
 
 // 怪物列表
@@ -126,6 +138,9 @@ typedef struct TMonseterList {
 
 	// 打印信息
 	BOOL dbgPrintMsg();
+
+	// 获取路径最小的怪的下标
+	DWORD getMinDistanceMonIndex();
 }_TMonseterList;
 
 
@@ -159,3 +174,28 @@ typedef struct TCActionList {
 	BOOL UseActionByName(char* szpName);
 
 }_TCActionList;
+
+typedef struct TRoleObj {
+	//+8 //角色标识 0x31
+	//+ c //此数组下标
+	//+ 18 //玩家名字
+	//+ 1A64 //选中怪物 0xFFFF标识未选中
+	DWORD ndSelIndex;
+
+	// 当前X坐标
+	float flXCur;
+
+	// 当前Y坐标
+	float flYCur;
+
+	//+ 3428 //选中状态 1选中自己/0未选中自己
+
+	// 初始化
+	TRoleObj* GetData();
+
+	// 选中对象
+	BOOL SelObj(DWORD ndIndexForAllObj);
+
+}_TRoleObj;
+
+#endif
